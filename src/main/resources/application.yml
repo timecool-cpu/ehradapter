@@ -1,13 +1,21 @@
-#server:
-#  port: 8443
-#  ssl:
-#    enabled: true
-#    key-store: classpath:server.keystore  # 你的服务端私钥
-#    key-store-password: yourpassword
-#    key-password: yourpassword
-#    trust-store: classpath:truststore.jks # CA证书
-#    trust-store-password: yourpassword
-#    client-auth: need
+server:
+  port: 8443
+  ssl:
+    enabled: true
+    #服务器密钥库，保存服务器的私钥公钥以及证书
+    key-store: classpath:server.p12         # 你的服务端证书
+    #密钥库的访问密码
+    key-store-password: 123456
+    #密钥库别名
+    key-alias: ehrcloud
+    key-store-type: PKCS12
+    #把CA的证书加入到trust.keystore中，服务器在验证客户端证书是，从trust.keystore中取出CA的公钥进行验证
+    trust-store: classpath:truststore.p12           # 受信任CA，或客户端证书
+    trust-store-password: 123456
+    trust-store-type: PKCS12
+    client-auth: need                       # 表示客户端必须带证书
+
+
 
 spring:
   datasource:
