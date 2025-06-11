@@ -10,4 +10,3 @@ public class SqlExecuteRequest {
     private String sql;
     private Map<String,String> params;
 }
-

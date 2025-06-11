@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.apiplatform.mapper.UnifiedQueryMapper">
+
+    <!-- 统一鉴权验证 -->
+    <sql id="authValidation">
+        INNER JOIN auth_authorize aa
+          ON p.cert_no = aa.cert_no
+         AND p.hospital_id = aa.hospital_id
+         AND aa.credential = #{credential}
+        AND aa.state = '1'
+    </sql>
+
+    <!-- 患者基础信息查询 -->
+    <select id="queryPatientBasic" resultType="PatientBasicInfo">
+        SELECT
+        p.id, p.name,
+        p.sex, p.age,
+        p.certificate_type, p.cert_no,
+        p.tel, mv.in_hospital_no,
+        mv.inhos_date
+        FROM patient p
+        INNER JOIN medical_visit mv ON p.id = mv.patient_id
+        <include refid="authValidation"/>
+        WHERE p.hospital_id = #{hospitalId}
+        AND p.cert_no = #{certNo}
+        <if test="queryData.treatStartDate != null">
+            AND mv.inhos_date >= #{queryData.treatStartDate}
+        </if>
+        <if test="queryData.treatEndDate != null">
+            AND mv.inhos_date &lt;= #{queryData.treatEndDate}
+        </if>
+        <if test="inHospitalNo != null">
+            AND mv.in_hospital_no = #{inHospitalNo}
+        </if>
+    </select>
+
+    <!-- 入院信息查询 -->
+    <select id="queryAdmissionInfo" resultType="AdmissionInfo">
+        SELECT
+        ai.*, p.name, p.sex,
+        p.certificate_type, p.cert_no
+        FROM admission_info ai
+        INNER JOIN medical_visit mv ON ai.medical_serial_no = mv.medical_serial_no
+        INNER JOIN patient p ON mv.patient_id = p.id
+        <include refid="authValidation"/>
+        WHERE p.hospital_id = #{hospitalId}
+        AND p.cert_no = #{certNo}
+        <if test="queryData.treatStartDate != null">
+            AND mv.inhos_date >= #{queryData.treatStartDate}
+        </if>
+        <if test="queryData.treatEndDate != null">
+            AND mv.inhos_date &lt;= #{queryData.treatEndDate}
+        </if>
+    </select>
+
+    <!-- 出院信息查询 -->
+    <select id="queryDischargeInfo" resultType="DischargeInfo">
+        SELECT
+        di.*, mv.inhos_date,
+        mv.discharge_date as leave_date,
+        mv.master_doctor
+        FROM discharge_info di
+        INNER JOIN medical_visit mv ON di.medical_serial_no = mv.medical_serial_no
+        INNER JOIN patient p ON mv.patient_id = p.id
+        <include refid="authValidation"/>
+        WHERE di.medical_serial_no = #{medicalSerialNo}
+        AND p.hospital_id = #{hospitalId}
+    </select>
+
+    <!-- 费用明细查询 -->
+    <select id="queryExpenseDetail" resultType="ExpenseDetail">
+        SELECT
+        ed.*, mv.inhos_date,
+        mv.in_hospital_no
+        FROM expense_detail ed
+        INNER JOIN medical_visit mv ON ed.medical_serial_no = mv.medical_serial_no
+        INNER JOIN patient p ON mv.patient_id = p.id
+        <include refid="authValidation"/>
+        WHERE ed.medical_serial_no = #{medicalSerialNo}
+        AND p.hospital_id = #{hospitalId}
+    </select>
+
+    <!-- 电子病历查询 -->
+    <select id="queryEmrRecord" resultType="EmrRecord">
+        SELECT
+        emr.*, mv.inhos_date,
+        mv.in_hospital_no,
+        mv.master_doctor
+        FROM emr_record emr
+        INNER JOIN medical_visit mv ON emr.medical_serial_no = mv.medical_serial_no
+        INNER JOIN patient p ON mv.patient_id = p.id
+        <include refid="authValidation"/>
+        WHERE emr.medical_serial_no = #{medicalSerialNo}
+        AND p.hospital_id = #{hospitalId}
+    </select>
+
+    <!-- 发票信息查询 -->
+    <select id="queryInvoiceInfo" resultType="InvoiceInfo">
+        SELECT
+        ii.*, mv.in_hospital_no
+        FROM invoice_info ii
+        INNER JOIN medical_visit mv ON ii.medical_serial_no = mv.medical_serial_no
+        INNER JOIN patient p ON mv.patient_id = p.id
+        <include refid="authValidation"/>
+        WHERE ii.medical_serial_no = #{medicalSerialNo}
+        AND p.hospital_id = #{hospitalId}
+    </select>
+
+</mapper>
